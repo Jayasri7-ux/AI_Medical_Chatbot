@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediLumina | AI Medical Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        .prose pre {
+            background-color: #1e293b !important;
+        }
+
+        .prose code {
+            color: #14b8a6 !important;
+        }
+    </style>
+</head>
+
+<body class="antialiased">
+
+    <div class="flex h-screen max-w-7xl mx-auto overflow-hidden">
+
+        <!-- Sidebar (History) -->
+        <aside class="hidden md:flex flex-col w-72 bg-black/20 border-r border-white/10 p-4 fade-in">
+            <button onclick="newChat()" id="new-conversation-btn"
+                class="w-full py-3 mb-6 bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 border border-teal-500/30 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all">
+                <i class="fas fa-plus"></i> <span data-i18n="newConversation">New Conversation</span>
+            </button>
+
+            <div class="flex-1 overflow-y-auto">
+                <h3 class="text-xs font-bold text-muted uppercase tracking-wider mb-4 px-2" data-i18n="historyTitle">
+                    History</h3>
+                <div id="session-list" class="space-y-2">
+                    <!-- Session items injected here -->
+                </div>
+            </div>
+
+            <button onclick="clearAllHistory()"
+                class="mt-4 p-2 text-xs text-muted hover:text-red-400 transition-colors flex items-center gap-2">
+                <i class="fas fa-trash-alt"></i> <span data-i18n="clearHistory">Clear All History</span>
+            </button>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <div class="flex-1 flex flex-col p-4 md:p-6 overflow-hidden">
+
+            <!-- Header -->
+            <header class="flex items-center justify-between mb-8 fade-in">
+                <div class="flex items-center gap-3">
+                    <button class="md:hidden w-10 h-10 flex items-center justify-center text-muted">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div
+                        class="w-10 h-10 rounded-lg bg-teal-500/20 flex items-center justify-center border border-teal-500/30">
+                        <i class="fas fa-heart-pulse text-xl text-teal-400"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold medical-gradient-text leading-none">MediLumina</h1>
+                        <p class="text-[10px] text-muted font-medium uppercase tracking-tight">AI Medical Assistant</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <select id="language-selector"
+                        class="bg-slate-800/80 border border-white/10 text-white text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-teal-500/50">
+                        <option value="English">English</option>
+                        <option value="Telugu">తెలుగు (Telugu)</option>
+                        <option value="Hindi">हिन्दी (Hindi)</option>
+                    </select>
+                    <div id="current-session-title"
+                        class="hidden md:block text-sm font-medium text-slate-400 truncate max-w-md"
+                        data-i18n="newConversationTitle">
+                        New Conversation
+                    </div>
+                </div>
+            </header>
+
+            <!-- Chat Area -->
+            <main class="flex-1 glass-card overflow-hidden flex flex-col mb-4 fade-in" style="animation-delay: 0.1s;">
+                <div id="chat-history" class="flex-1 overflow-y-auto p-6 space-y-6">
+                    <!-- Welcome Message -->
+                    <div class="chat-bubble ai">
+                        <div class="prose prose-invert" data-i18n="welcomeMessage">
+                            <p>Welcome to <strong>MediLumina</strong>. I can help you analyze medical reports,
+                                documents, or answer your health-related questions. How can I assist you today?</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Controls -->
+                <div class="p-4 border-t border-white/10 bg-black/20">
+                    <div id="file-name-display"
+                        class="hidden mb-3 px-3 py-1.5 bg-teal-500/10 border border-teal-500/20 text-teal-400 text-sm rounded-lg flex items-center">
+                        <!-- Filename injected here -->
+                    </div>
+
+                    <div class="flex gap-3">
+                        <div class="flex-1 relative">
+                            <textarea id="query-input" rows="1" data-i18n-placeholder="typeQuery"
+                                placeholder="Type your medical query..."
+                                class="w-full bg-slate-800/50 border border-white/10 text-white rounded-xl py-3 pl-4 pr-12 focus:outline-none focus:ring-2 focus:ring-teal-500/50 resize-none transition-all"></textarea>
+
+                            <button id="voice-btn"
+                                class="absolute right-3 top-2.5 w-8 h-8 flex items-center justify-center text-muted hover:text-teal-400 transition-colors">
+                                <i class="fas fa-microphone"></i>
+                            </button>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <button id="upload-area" title="Upload Document"
+                                class="w-12 h-12 bg-slate-800/50 hover:bg-slate-700/50 border border-white/10 text-muted hover:text-teal-400 rounded-xl flex items-center justify-center transition-all">
+                                <i class="fas fa-paperclip text-lg"></i>
+                            </button>
+                            <input type="file" id="file-upload" class="hidden" accept="image/*,.pdf,.docx,.pptx">
+
+                            <button id="submit-query"
+                                class="px-6 h-12 btn-primary text-white font-semibold rounded-xl flex items-center justify-center">
+                                <i class="fas fa-paper-plane mr-2"></i> <span class="hidden md:inline"
+                                    data-i18n="sendMessage">Send message</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <p class="text-[10px] text-center text-muted mt-3" data-i18n="disclaimer">
+                        <i class="fas fa-info-circle mr-1"></i> For informational purposes only. Consult a medical
+                        professional for serious concerns.
+                    </p>
+                </div>
+            </main>
+
+        </div>
+
+        <!-- Scripts -->
+        <script src="/static/js/chat.js?v=4"></script>
+</body>
+
+</html>
