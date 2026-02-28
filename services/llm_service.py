@@ -9,16 +9,17 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 MODEL_NAME = "llama-3.3-70b-versatile"
-
 def get_ai_response(messages: list, language: str = "English") -> str:
-    if not GROQ_API_KEY:
+    load_dotenv()
+    api_key = os.getenv("GROQ_API_KEY")
+    
+    if not api_key:
         logger.error("GROQ_API_KEY not set")
         return "Error: API Key missing."
 
     headers = {
-        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json"
     }
     

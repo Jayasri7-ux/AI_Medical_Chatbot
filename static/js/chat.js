@@ -13,6 +13,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     let isRecording = false;
     let recognition;
+    let mediaRecorder;
+    let audioChunks = [];
     let currentSessionId = null;
     let currentLanguage = 'English';
 
@@ -241,20 +243,21 @@ document.addEventListener('DOMContentLoaded', function () {
     // Voice Input Toggle
     if (voiceBtn) {
         voiceBtn.addEventListener('click', () => {
-            if (!recognition) {
-                alert('Voice input is not supported in this browser. Please use Google Chrome or Microsoft Edge for voice input functionality.');
-                return;
+            if (isRecording) {
+                stopRecording();
+            } else {
+                if (recognition) {
+                    startRecording();
+                } else if (window.MediaRecorder) {
+                    startRecordingFallback();
+                } else {
+                    alert('Voice input is not supported in this browser. Please use Google Chrome or Microsoft Edge for voice input functionality.');
+                }
             }
-            isRecording ? stopRecording() : startRecording();
         });
     }
 
     function startRecording() {
-        if (!recognition) {
-            alert('Voice input not supported in this browser. Please use Chrome or Edge.');
-            return;
-        }
-
         try {
             isRecording = true;
             voiceBtn.innerHTML = '<i class="fas fa-stop text-red-500"></i>';
@@ -269,11 +272,62 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    async function startRecordingFallback() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+
+            mediaRecorder.ondataavailable = (event) => {
+                audioChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                const formData = new FormData();
+                formData.append('file', audioBlob, 'recording.webm');
+
+                voiceBtn.innerHTML = '<i class="fas fa-spinner fa-spin text-teal-400"></i>';
+
+                try {
+                    const response = await fetch('/api/transcribe', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await response.json();
+                    if (data.transcript) {
+                        queryInput.value = data.transcript;
+                    }
+                } catch (error) {
+                    console.error('Transcription error:', error);
+                    alert('Failed to transcribe audio.');
+                } finally {
+                    voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+                    voiceBtn.classList.remove('animate-pulse');
+                }
+            };
+
+            mediaRecorder.start();
+            isRecording = true;
+            voiceBtn.innerHTML = '<i class="fas fa-stop text-red-500"></i>';
+            voiceBtn.classList.add('animate-pulse');
+        } catch (error) {
+            console.error('Error starting fallback recording:', error);
+            alert('Microphone access denied or not available.');
+        }
+    }
+
     function stopRecording() {
         isRecording = false;
         voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
         voiceBtn.classList.remove('animate-pulse');
-        recognition.stop();
+
+        if (recognition) {
+            recognition.stop();
+        } else if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        }
     }
 
     // Submit Query

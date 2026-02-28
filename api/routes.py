@@ -10,9 +10,23 @@ from datetime import datetime
 from services.extractor import extract_text_from_pdf, extract_text_from_docx, extract_text_from_pptx
 from services.llm_service import get_ai_response
 from services import history_service
+from services import speech_service
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+@router.post("/transcribe")
+async def transcribe_audio(file: UploadFile = File(...)):
+    try:
+        file_content = await file.read()
+        if not file_content:
+            raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+        
+        transcript = speech_service.transcribe_audio(file_content, file.filename)
+        return {"transcript": transcript}
+    except Exception as e:
+        logger.error(f"Transcription error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)}")
 
 @router.get("/sessions")
 async def list_sessions():
