@@ -4,8 +4,8 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-import logging
-from api.routes import router
+import os
+from .routes import router
 
 # Setup Logging
 logging.basicConfig(level=logging.INFO)
@@ -23,9 +23,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Static Files & Templates
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
+# Static Files & Templates (Absolute Paths for Cloud Compatibility)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
+templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
 # Include API Routes
 app.include_router(router, prefix="/api")
