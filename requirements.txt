@@ -9,4 +9,4 @@ PyMuPDF
 python-docx
 python-pptx
 gunicorn
-easyocr
+#easyocr
