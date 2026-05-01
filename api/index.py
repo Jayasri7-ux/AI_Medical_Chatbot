@@ -5,6 +5,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import os
+import logging
 from .routes import router
 
 # Setup Logging
@@ -39,4 +40,5 @@ if __name__ == "__main__":
     import uvicorn
     import os
     port = int(os.environ.get("PORT", 9000))
-    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
+    # Note: Use module string that uvicorn can find relative to CWD
+    uvicorn.run("api.index:app", host="0.0.0.0", port=port, reload=True)
