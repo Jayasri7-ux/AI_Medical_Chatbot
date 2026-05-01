@@ -3,7 +3,7 @@ import fitz  # PyMuPDF
 import docx
 from pptx import Presentation
 import logging
-import easyocr
+# import easyocr
 import numpy as np
 from PIL import Image
 
@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 # Initialize EasyOCR reader (will download models on first run if not present)
 # Using english only for general medical text OCR
-ocr_reader = easyocr.Reader(['en'], gpu=False)
+# ocr_reader = easyocr.Reader(['en'], gpu=False)
 
 def extract_text_from_image(img_bytes: bytes) -> str:
     try:
@@ -20,10 +20,11 @@ def extract_text_from_image(img_bytes: bytes) -> str:
         image_np = np.array(image)
         
         # Read text
-        results = ocr_reader.readtext(image_np)
+        # results = ocr_reader.readtext(image_np)
         
         # Join extracted text snippets
-        text = " ".join([res[1] for res in results])
+        # text = " ".join([res[1] for res in results])
+        text = "OCR disabled to reduce deployment size."
         return text
     except Exception as e:
         logger.error(f"Error extracting Image OCR: {e}")
