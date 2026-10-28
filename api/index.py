@@ -34,7 +34,9 @@ app.include_router(router, prefix="/api")
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
-    return templates.TemplateResponse(request, "index.html", {"request": request})
+    html_content = templates.get_template("index.html").render({"request": request})
+return HTMLResponse(content=html_content, status_code=200)
+    
     
 
 if __name__ == "__main__":
